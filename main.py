@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = FastAPI(title="Sales Service Microservice")
-
+#test
 ENV = os.getenv("APP_ENVIRONMENT", "local")
 AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
 SNS_TOPIC_ARN = os.getenv("SNS_TOPIC_ARN") 

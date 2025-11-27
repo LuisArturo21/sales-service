@@ -40,3 +40,26 @@ jobs:
         # Subir la imagen a AWS
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ec2-user
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 303339717226.dkr.ecr.us-east-1.amazonaws.com
+          
+          docker stop sales-service || true
+          docker rm sales-service || true
+          docker pull 303339717226.dkr.ecr.us-east-1.amazonaws.com/sales-service-repo:latest
+          
+          docker run -d -p 8001:8000 \
+            -e AWS_REGION="us-east-1" \
+            -e APP_ENVIRONMENT="production" \
+            -e TABLE_NOTES="SalesNotes" \
+            -e TABLE_ITEMS="SalesNoteItems" \
+            -e SNS_TOPIC_ARN="arn:aws:sns:us-east-1:303339717226:NewSalesNoteTopic" \
+            --name sales-service \
+            303339717226.dkr.ecr.us-east-1.amazonaws.com/sales-service-repo:latest
